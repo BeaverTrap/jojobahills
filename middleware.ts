@@ -20,7 +20,7 @@ export default function middleware(req: NextRequest) {
     },
     {
       callbacks: {
-        authorized: ({ token }) => !!token,
+        authorized: ({ token }: { token: string | null | undefined }) => !!token,
       },
     }
   )(req);
