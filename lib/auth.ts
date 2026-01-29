@@ -2,41 +2,24 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 export function getAuthOptions(): NextAuthOptions {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const authSecret = process.env.AUTH_SECRET;
+  // Use dummy values during build, validate only at runtime
+  const clientId = process.env.GOOGLE_CLIENT_ID || "dummy-build-client-id";
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || "dummy-build-client-secret";
+  const authSecret = process.env.AUTH_SECRET || "dummy-build-secret";
   
-  // During build time, allow missing env vars (they'll be checked at runtime)
-  const isBuildTime = process.env.NEXT_PHASE === "phase-production-build";
+  // Runtime validation - only throw when actually handling requests
+  // Check if we're in a request context (not build time)
+  const isRuntime = typeof process !== "undefined" && 
+                    process.env.NODE_ENV !== undefined &&
+                    !process.env.NEXT_PHASE?.includes("build");
   
-  if (isBuildTime && (!clientId || !clientSecret || !authSecret)) {
-    // Return a minimal config for build time
-    return {
-      providers: [
-        GoogleProvider({
-          clientId: "build-time-placeholder",
-          clientSecret: "build-time-placeholder",
-        }),
-      ],
-      callbacks: {
-        async signIn() {
-          return false;
-        },
-        async session({ session }) {
-          return session;
-        },
-      },
-      secret: "build-time-placeholder",
-    };
-  }
-  
-  // Runtime checks
-  if (!clientId || !clientSecret) {
-    throw new Error("Missing Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)");
-  }
-
-  if (!authSecret) {
-    throw new Error("Missing AUTH_SECRET");
+  if (isRuntime) {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      throw new Error("Missing Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)");
+    }
+    if (!process.env.AUTH_SECRET) {
+      throw new Error("Missing AUTH_SECRET");
+    }
   }
 
   return {
