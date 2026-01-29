@@ -1,6 +1,6 @@
-# Park Operations
+# JoJoba Hills SKP Maintenance - Park Ops
 
-Internal staff app for valve lookup and management. Built with Next.js App Router, TypeScript, and Tailwind CSS.
+Professional valve lookup and management system for JoJoba Hills SKP Maintenance. Built with Next.js App Router, TypeScript, and Tailwind CSS.
 
 ## Features
 

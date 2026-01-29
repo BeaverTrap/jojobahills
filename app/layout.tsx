@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Park Operations",
-  description: "Internal staff app for valve lookup and management",
+  title: "JoJoba Hills SKP Maintenance - Park Ops",
+  description: "JoJoba Hills SKP Maintenance - Park Operations valve lookup and management system",
   manifest: "/manifest.webmanifest",
   themeColor: "#2563eb",
   appleWebApp: {
@@ -41,16 +41,18 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.webmanifest" />
-        <meta name="theme-color" content="#2563eb" />
+        <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Park Operations" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="JoJoba Hills SKP" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
       >
         <Header />
-        {children}
+        <main className="min-h-screen">
+          {children}
+        </main>
         <InstallButton />
       </body>
     </html>
