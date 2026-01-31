@@ -10,6 +10,12 @@ let cache: CacheEntry | null = null;
 let zoneSheetCache: Record<string, string>[] | null = null; // Store raw Zone Sheet data
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
+/** Clear the valve/zone cache so the next request reads fresh from the database file. */
+export function clearValveCache(): void {
+  cache = null;
+  zoneSheetCache = null;
+}
+
 /**
  * Join Valve Sheet and Zone Sheet data
  */

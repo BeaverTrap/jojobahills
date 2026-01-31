@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { getValveData, getZonesForLot, getLotsForZone } from "@/lib/data";
+import { getValveData, getZonesForLot, getLotsForZone, clearValveCache } from "@/lib/data";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const lotNumber = searchParams.get("lot");
     const zoneName = searchParams.get("zone");
-    
+    const refresh = searchParams.get("refresh");
+
+    // Force re-read from database file (e.g. after updating the Excel file)
+    if (refresh === "1" || refresh === "true") {
+      clearValveCache();
+    }
+
     // If lot parameter provided, return zones for that lot
     if (lotNumber) {
       const zones = await getZonesForLot(lotNumber);

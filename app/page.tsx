@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ValveRecord } from "@/lib/types";
+import { buildZoneColorMap } from "@/lib/zone-colors";
+import { ParkMap } from "@/app/components/ParkMap";
 
 type ValvesResponse = {
   updatedAt: number;
@@ -12,12 +15,24 @@ type ValvesResponse = {
 };
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<ValvesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [zonesForSearchedLot, setZonesForSearchedLot] = useState<string[]>([]);
+
+  // Sync search from URL when landing with ?lot= or ?search=
+  useEffect(() => {
+    const q = searchParams.get("lot") || searchParams.get("search");
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
   const [lotsForSearchedZone, setLotsForSearchedZone] = useState<string[]>([]);
+  const [lotsInZonesOfSearchedLot, setLotsInZonesOfSearchedLot] = useState<string[]>([]);
+  const [lotsForPrimaryZones, setLotsForPrimaryZones] = useState<string[]>([]);
+  const [mapShowLots, setMapShowLots] = useState(true);
+  const [mapShowPlaces, setMapShowPlaces] = useState(true);
+  const [mapShowValves, setMapShowValves] = useState(true);
 
   useEffect(() => {
     fetch("/api/valves")
@@ -66,11 +81,32 @@ export default function Home() {
           });
       } else {
         setZonesForSearchedLot([]);
+        setLotsInZonesOfSearchedLot([]);
       }
     } else {
       setZonesForSearchedLot([]);
+      setLotsInZonesOfSearchedLot([]);
     }
   }, [searchQuery, data]);
+
+  // When a lot is searched, fetch all lots in that lot's zone(s) so the map shows the full zone with the selected lot highlighted
+  useEffect(() => {
+    if (!zonesForSearchedLot.length || !searchQuery.trim()) {
+      setLotsInZonesOfSearchedLot([]);
+      return;
+    }
+    Promise.all(
+      zonesForSearchedLot.map((zone) =>
+        fetch(`/api/valves?zone=${encodeURIComponent(zone)}`).then((r) => r.json())
+      )
+    )
+      .then((results) => {
+        const all = new Set<string>();
+        results.forEach((r) => (r.lots || []).forEach((lot: string) => all.add(lot)));
+        setLotsInZonesOfSearchedLot(Array.from(all).sort());
+      })
+      .catch(() => setLotsInZonesOfSearchedLot([]));
+  }, [zonesForSearchedLot.join(","), searchQuery.trim()]);
 
   // Fetch lots for searched zone
   useEffect(() => {
@@ -99,6 +135,38 @@ export default function Home() {
       setLotsForSearchedZone([]);
     }
   }, [searchQuery, data]);
+
+  // When user selected a valve, fetch lots for that valve's zones (primaryZones) so we can show them on the map
+  const searchResultsForEffect = useMemo(() => {
+    if (!data?.valves || !searchQuery.trim()) return null;
+    const query = searchQuery.trim().toLowerCase();
+    const primaryZones = new Set<string>();
+    let isValveMatch = false;
+    data.valves.forEach((valve) => {
+      if (valve.valveId.toLowerCase() === query) {
+        isValveMatch = true;
+        valve.zones.forEach((z) => primaryZones.add(z));
+      }
+    });
+    if (!isValveMatch || primaryZones.size === 0) return null;
+    return { primaryZones: Array.from(primaryZones) };
+  }, [data?.valves, searchQuery]);
+
+  useEffect(() => {
+    if (!searchResultsForEffect?.primaryZones?.length) {
+      setLotsForPrimaryZones([]);
+      return;
+    }
+    Promise.all(
+      searchResultsForEffect.primaryZones.map((zone) =>
+        fetch(`/api/valves?zone=${encodeURIComponent(zone)}`).then((r) => r.json())
+      )
+    ).then((results) => {
+      const all = new Set<string>();
+      results.forEach((r) => (r.lots || []).forEach((lot: string) => all.add(lot)));
+      setLotsForPrimaryZones(Array.from(all).sort());
+    }).catch(() => setLotsForPrimaryZones([]));
+  }, [searchResultsForEffect?.primaryZones?.length, searchResultsForEffect?.primaryZones?.join(",")]);
 
   // Find all matching valves, zones, and lots based on search query
   const searchResults = useMemo(() => {
@@ -196,6 +264,45 @@ export default function Home() {
 
   const hasSearchResults = searchQuery.trim().length > 0;
 
+  // Lots to show on the map: zone search → lots in that zone; lot search → all lots in that lot's zone(s), with selected lot highlighted; valve search → lots in valve's zones
+  const mapLotsToShow = useMemo(() => {
+    if (!hasSearchResults) return [];
+    if (lotsForSearchedZone.length > 0) return lotsForSearchedZone;
+    if (lotsInZonesOfSearchedLot.length > 0) return lotsInZonesOfSearchedLot;
+    if (searchResults.lots.length > 0) return [searchResults.lots[0]];
+    if (lotsForPrimaryZones.length > 0) return lotsForPrimaryZones;
+    return [];
+  }, [hasSearchResults, lotsForSearchedZone, lotsInZonesOfSearchedLot, searchResults.lots, lotsForPrimaryZones]);
+  const mapHighlightLot = searchResults.lots.length === 1 ? searchResults.lots[0] : null;
+  const mapHighlightValve = searchResults.valves.length === 1 ? searchResults.valves[0].valveId : null;
+
+  // Zones we're currently showing on the map (so each lot is colored by the zone that's in this context)
+  const mapContextZones = useMemo(() => {
+    if (!hasSearchResults) return [];
+    if (lotsForSearchedZone.length > 0 && searchQuery.trim()) return [searchQuery.trim()];
+    if (lotsInZonesOfSearchedLot.length > 0 && zonesForSearchedLot.length > 0) return zonesForSearchedLot;
+    if (lotsForPrimaryZones.length > 0 && searchResults.primaryZones?.length) return searchResults.primaryZones;
+    return [];
+  }, [hasSearchResults, lotsForSearchedZone, lotsInZonesOfSearchedLot, lotsForPrimaryZones, searchQuery, zonesForSearchedLot, searchResults.primaryZones]);
+
+  // Lot -> zones (for zone color on map); zone -> color (base + highlight)
+  const { lotZones, zoneColors } = useMemo(() => {
+    if (!data?.valves?.length) return { lotZones: {} as Record<string, string[]>, zoneColors: {} as Record<string, { base: string; highlight: string }> };
+    const lotToZones: Record<string, string[]> = {};
+    const zoneSet = new Set<string>();
+    data.valves.forEach((v) => {
+      v.zones.forEach((zone) => {
+        zoneSet.add(zone);
+        v.lots.forEach((lot) => {
+          if (!lotToZones[lot]) lotToZones[lot] = [];
+          if (!lotToZones[lot].includes(zone)) lotToZones[lot].push(zone);
+        });
+      });
+    });
+    const zoneColors = buildZoneColorMap(Array.from(zoneSet));
+    return { lotZones: lotToZones, zoneColors };
+  }, [data?.valves]);
+
   // Natural numeric sort function
   const naturalSort = (a: string, b: string): number => {
     // Extract numbers and text parts
@@ -224,7 +331,7 @@ export default function Home() {
           <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Data</h2>
           <p className="text-red-300">{error}</p>
           <p className="text-sm text-red-400 mt-4">
-            Make sure the Excel file exists at: <code className="bg-gray-800 px-2 py-1 rounded text-gray-300">data/Master Zone & Valve Database.xlsx</code>
+            Connect your Google Sheet (env: <code className="bg-gray-800 px-2 py-1 rounded text-gray-300">GOOGLE_SHEETS_ID</code>) or place the downloaded file at: <code className="bg-gray-800 px-2 py-1 rounded text-gray-300">data/Master Zone & Valve Database.xlsx</code>
           </p>
         </div>
       </div>
@@ -239,12 +346,31 @@ export default function Home() {
         <p className="text-gray-400">
           Enter a valve ID, zone, or lot number to find all related information
         </p>
-        {data?.stale && (
-          <p className="text-sm text-yellow-400 mt-2">
-            ⚠️ Showing cached data (last updated:{" "}
-            {new Date(data.updatedAt).toLocaleString()})
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-3 mt-2">
+          {data?.stale && (
+            <p className="text-sm text-yellow-400">
+              ⚠️ Showing cached data (last updated:{" "}
+              {new Date(data.updatedAt).toLocaleString()})
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/valves?refresh=1");
+                if (!res.ok) throw new Error("Refresh failed");
+                const json = await res.json();
+                if (json.error) throw new Error(json.error);
+                setData(json);
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+            className="text-sm text-blue-400 hover:text-blue-300 underline"
+          >
+            Refresh data
+          </button>
+        </div>
       </div>
 
       {/* Valve, Zone, and Search - All on one line */}
@@ -324,6 +450,58 @@ export default function Home() {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Map - lot numbers/names over the clean map; layer toggles to hide/show lots, places, valves */}
+      {data?.valves && data.valves.length > 0 && (
+        <div className="mb-8 bg-gray-900 rounded-lg border border-gray-800 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <h2 className="text-lg font-semibold text-white">Map</h2>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={mapShowLots}
+                  onChange={(e) => setMapShowLots(e.target.checked)}
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                />
+                Lots
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={mapShowPlaces}
+                  onChange={(e) => setMapShowPlaces(e.target.checked)}
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                />
+                Places
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+                <input
+                  type="checkbox"
+                  checked={mapShowValves}
+                  onChange={(e) => setMapShowValves(e.target.checked)}
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                />
+                Valves
+              </label>
+            </div>
+          </div>
+          <ParkMap
+            lotsToShow={mapLotsToShow}
+            highlightLot={mapHighlightLot}
+            highlightValve={mapHighlightValve}
+            contextZones={mapContextZones}
+            lotZones={lotZones}
+            zoneColors={zoneColors}
+            onLotClick={(lotId) => setSearchQuery(lotId)}
+            onPlaceClick={(placeName) => setSearchQuery(placeName)}
+            onValveClick={(valveId) => setSearchQuery(valveId)}
+            showLots={mapShowLots}
+            showPlaces={mapShowPlaces}
+            showValves={mapShowValves}
+          />
         </div>
       )}
 

@@ -19,3 +19,14 @@ You can provide the data in one of these formats:
    - The app will look for tabs named "Valve Sheet" and "Zone Sheet"
 
 Once you place the file(s) here, the app will automatically use them when Google Sheets credentials are not configured.
+
+## Future: Places / Facilities sheet
+
+To add info for map facilities (Wood Shop, Metal Shop, Garden & Greenhouse, Golf Range, etc.), you can add a **Places Sheet** (or **Facilities Sheet**) to the same Excel file or Google Sheet. Suggested columns:
+
+- **Name** – matches the place label on the map (e.g. "Wood Shop", "Pond 1")
+- **Description** – short blurb
+- **Contact** or **Hours** – optional
+- **Notes** – maintenance or other notes
+
+The app can later read this sheet and show the info when a user clicks a facility on the map.
