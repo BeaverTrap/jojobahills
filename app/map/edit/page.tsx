@@ -52,13 +52,10 @@ export default function MapEditPage() {
       .then((data) => {
         if (data.valves?.length) {
           // Deduplicate by valveId from database so each valve appears once; fixes "select one = select all"
-          const ids = Array.from(
-            new Set(
-              data.valves
-                .map((v: { valveId: string }) => (v.valveId ?? "").trim())
-                .filter((id: string) => id.length > 0)
-            )
-          ).sort(naturalSort);
+          const rawIds: string[] = data.valves
+            .map((v: { valveId: string }) => (v.valveId ?? "").trim())
+            .filter((id: string) => id.length > 0);
+          const ids = Array.from(new Set(rawIds)).sort(naturalSort);
           setValveIdsFromApi(ids);
         }
       })
