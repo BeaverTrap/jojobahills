@@ -157,7 +157,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
                 onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onPlaceClick?.(placeName); } : undefined}
                 className={`
                   inline-flex items-center justify-center rounded-full p-1.5
-                  ${getPlaceColor(pos.icon)}
+                  ${getPlaceColor(pos.icon ?? "MdPlace")}
                   ${isClickable ? "cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-white/80 transition-all" : ""}
                 `}
               >
