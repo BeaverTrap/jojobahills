@@ -197,7 +197,7 @@ export default function MapEditPage() {
               {placeNames.map((placeName) => {
                 const pos = places[placeName];
                 if (!pos) return null;
-                const IconComponent = getPlaceIcon(pos.icon);
+                const IconComponent = getPlaceIcon(pos.icon ?? "MdPlace");
                 const isSelected = mode === "places" && selectedPlace === placeName;
                 return (
                   <div
@@ -208,7 +208,7 @@ export default function MapEditPage() {
                   >
                     <span
                       className={`inline-flex items-center justify-center rounded-full p-1.5 ${
-                        isSelected ? "bg-blue-500 text-white ring-2 ring-white" : getPlaceColor(pos.icon)
+                        isSelected ? "bg-blue-500 text-white ring-2 ring-white" : getPlaceColor(pos.icon ?? "MdPlace")
                       }`}
                     >
                       <IconComponent size={18} />
@@ -313,7 +313,7 @@ export default function MapEditPage() {
                 placeNames.map((placeName) => {
                   const pos = places[placeName];
                   const isSelected = selectedPlace === placeName;
-                  const IconComponent = getPlaceIcon(pos?.icon);
+                  const IconComponent = getPlaceIcon(pos?.icon ?? "MdPlace");
                   return (
                     <button
                       key={placeName}

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ParkMap } from "@/app/components/ParkMap";
 
-export default function MapPage() {
+function MapPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const zoneParam = searchParams.get("zone");
@@ -116,5 +116,13 @@ export default function MapPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-8 text-gray-400">Loading map...</div>}>
+      <MapPageContent />
+    </Suspense>
   );
 }

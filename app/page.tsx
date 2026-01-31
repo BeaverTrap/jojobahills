@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { Suspense, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ValveRecord } from "@/lib/types";
@@ -14,7 +14,7 @@ type ValvesResponse = {
   valves: ValveRecord[];
 };
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [data, setData] = useState<ValvesResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -886,5 +886,13 @@ export default function Home() {
       )}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="max-w-7xl mx-auto px-4 py-8 text-gray-400">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
