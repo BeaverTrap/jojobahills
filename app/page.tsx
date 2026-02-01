@@ -33,6 +33,20 @@ function HomeContent() {
   const [mapShowLots, setMapShowLots] = useState(true);
   const [mapShowPlaces, setMapShowPlaces] = useState(true);
   const [mapShowValves, setMapShowValves] = useState(true);
+  const [hideInlineMap, setHideInlineMap] = useState(false);
+
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 411px)");
+    const portrait = window.matchMedia("(orientation: portrait)");
+    const update = () => setHideInlineMap(mobile.matches && portrait.matches);
+    update();
+    mobile.addEventListener("change", update);
+    portrait.addEventListener("change", update);
+    return () => {
+      mobile.removeEventListener("change", update);
+      portrait.removeEventListener("change", update);
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/valves")
@@ -463,66 +477,63 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Map - full width on mobile; clear "open full map" for phone screens */}
+      {/* Map - on mobile portrait hide jumbled inline map; show only "Open full map" */}
       {data?.valves && data.valves.length > 0 && (
-        <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 px-0 sm:px-0 bg-gray-900 sm:rounded-lg border-0 sm:border border-gray-800 border-y border-gray-800 sm:border-y-0 py-3 sm:py-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 px-3 sm:px-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <h2 className="text-base sm:text-lg font-semibold text-white">Map</h2>
-              <Link
-                href="/map"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium touch-manipulation min-h-[44px] sm:min-h-0 items-center"
-              >
-                Open full map
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
-              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
-                <input
-                  type="checkbox"
-                  checked={mapShowLots}
-                  onChange={(e) => setMapShowLots(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
+        <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 px-3 sm:px-0 bg-gray-900 sm:rounded-lg border-0 sm:border border-gray-800 border-y border-gray-800 sm:border-y-0 py-4 sm:py-4">
+          <h2 className="text-base sm:text-lg font-semibold text-white mb-3 px-0 sm:px-4">Map</h2>
+          {hideInlineMap ? (
+            <Link
+              href="/map"
+              className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-gray-600 bg-gray-800/80 p-8 text-center touch-manipulation min-h-[200px] hover:border-blue-500 hover:bg-gray-800 transition-colors"
+            >
+              <span className="text-4xl text-gray-500" aria-hidden>🗺️</span>
+              <span className="text-lg font-semibold text-white">Open full map</span>
+              <span className="text-sm text-gray-400">Tap to open. Use landscape or scroll in portrait for a clear view.</span>
+              <span className="text-blue-400 text-sm font-medium">Open map →</span>
+            </Link>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 px-0 sm:px-4">
+                <Link
+                  href="/map"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium touch-manipulation min-h-[44px] sm:min-h-0 items-center"
+                >
+                  Open full map
+                  <span aria-hidden>→</span>
+                </Link>
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
+                    <input type="checkbox" checked={mapShowLots} onChange={(e) => setMapShowLots(e.target.checked)} className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4" />
+                    Lots
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
+                    <input type="checkbox" checked={mapShowPlaces} onChange={(e) => setMapShowPlaces(e.target.checked)} className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4" />
+                    Places
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
+                    <input type="checkbox" checked={mapShowValves} onChange={(e) => setMapShowValves(e.target.checked)} className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4" />
+                    Valves
+                  </label>
+                </div>
+              </div>
+              <div className="rounded-none sm:rounded-lg overflow-hidden border-0 border-gray-700">
+                <ParkMap
+                  lotsToShow={mapLotsToShow}
+                  highlightLot={mapHighlightLot}
+                  highlightValve={mapHighlightValve}
+                  contextZones={mapContextZones}
+                  lotZones={lotZones}
+                  zoneColors={zoneColors}
+                  onLotClick={(lotId) => setSearchQuery(lotId)}
+                  onPlaceClick={(placeName) => setSearchQuery(placeName)}
+                  onValveClick={(valveId) => setSearchQuery(valveId)}
+                  showLots={mapShowLots}
+                  showPlaces={mapShowPlaces}
+                  showValves={mapShowValves}
                 />
-                Lots
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
-                <input
-                  type="checkbox"
-                  checked={mapShowPlaces}
-                  onChange={(e) => setMapShowPlaces(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
-                />
-                Places
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
-                <input
-                  type="checkbox"
-                  checked={mapShowValves}
-                  onChange={(e) => setMapShowValves(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
-                />
-                Valves
-              </label>
-            </div>
-          </div>
-          <div className="rounded-none sm:rounded-lg overflow-hidden border-0 border-gray-700">
-          <ParkMap
-            lotsToShow={mapLotsToShow}
-            highlightLot={mapHighlightLot}
-            highlightValve={mapHighlightValve}
-            contextZones={mapContextZones}
-            lotZones={lotZones}
-            zoneColors={zoneColors}
-            onLotClick={(lotId) => setSearchQuery(lotId)}
-            onPlaceClick={(placeName) => setSearchQuery(placeName)}
-            onValveClick={(valveId) => setSearchQuery(valveId)}
-            showLots={mapShowLots}
-            showPlaces={mapShowPlaces}
-            showValves={mapShowValves}
-          />
-          </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

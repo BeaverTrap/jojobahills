@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useMemo } from "react";
+import { Suspense, useEffect, useRef, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ParkMap } from "@/app/components/ParkMap";
@@ -22,14 +22,27 @@ function MapPageContent() {
   const [isPortrait, setIsPortrait] = useState(true);
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
+  const didDefaultLotsOff = useRef(false);
 
+  // Large phones (e.g. Galaxy S25 Ultra ~412px) and up get desktop layout so map isn't jumbled
   useEffect(() => {
-    const m = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(m.matches);
+    const m = window.matchMedia("(max-width: 411px)");
+    const update = () => {
+      setIsMobile(m.matches);
+      if (!m.matches) didDefaultLotsOff.current = false;
+    };
     update();
     m.addEventListener("change", update);
     return () => m.removeEventListener("change", update);
   }, []);
+
+  // On small mobile, hide lots by default once to reduce overlap (user can enable in Layers)
+  useEffect(() => {
+    if (isMobile && !didDefaultLotsOff.current) {
+      setShowLots(false);
+      didDefaultLotsOff.current = true;
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     const portrait = window.matchMedia("(orientation: portrait)");
@@ -154,10 +167,18 @@ function MapPageContent() {
           </div>
         </div>
 
-        {/* Portrait: most of screen height, horizontal scroll for width. Landscape: full remaining height, no scroll */}
+        {/* Portrait: big scrollable map (92vh), pan horizontally and vertically */}
         {isPortrait ? (
-          <div className="h-[85vh] overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x shrink-0">
-            <div className="h-full flex flex-col relative shrink-0" style={{ width: "calc(85vh * 4 / 3)", minWidth: "100%" }}>
+          <div className="h-[92vh] w-full overflow-auto overscroll-contain touch-pan-x touch-pan-y shrink-0">
+            {/* 4:3 map, larger than viewport so you can scroll both ways */}
+            <div
+              className="flex flex-col relative shrink-0 bg-gray-900"
+              style={{
+                width: "133.33vh",
+                height: "100vh",
+                minWidth: "100%",
+              }}
+            >
               {loading && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
                   <p className="text-gray-300 text-sm">Loading lots...</p>
@@ -197,27 +218,24 @@ function MapPageContent() {
           </div>
         )}
 
-        {/* Bottom sheet: selected marker popup */}
+        {/* Bottom sheet: compact so map stays visible */}
         {selectedMarker && (
-          <div className="absolute inset-x-0 bottom-0 z-20 rounded-t-2xl bg-gray-800 border-t border-gray-600 shadow-2xl p-4 pb-[env(safe-area-inset-bottom)]">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <p className="text-gray-400 text-xs uppercase tracking-wide">
-                {selectedMarker.type === "lot" ? "Lot" : selectedMarker.type === "valve" ? "Valve" : "Place"}
-              </p>
-              <button
-                type="button"
-                onClick={() => setSelectedMarker(null)}
-                className="text-gray-400 hover:text-white text-2xl leading-none touch-manipulation"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-white text-xl font-semibold mb-4">{selectedMarker.id}</p>
+          <div className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-3 px-3 py-2 bg-gray-800/95 border-t border-gray-600 pb-[env(safe-area-inset-bottom)]">
+            <button
+              type="button"
+              onClick={() => setSelectedMarker(null)}
+              className="text-gray-400 hover:text-white text-xl leading-none touch-manipulation p-1"
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <span className="text-gray-400 text-xs uppercase flex-1 min-w-0 truncate">
+              {selectedMarker.type === "lot" ? "Lot" : selectedMarker.type === "valve" ? "Valve" : "Place"} {selectedMarker.id}
+            </span>
             <button
               type="button"
               onClick={handleSearchThis}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium touch-manipulation"
+              className="shrink-0 py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium touch-manipulation"
             >
               Search this
             </button>
