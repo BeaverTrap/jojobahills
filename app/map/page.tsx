@@ -167,16 +167,17 @@ function MapPageContent() {
           </div>
         </div>
 
-        {/* Portrait: big scrollable map (92vh), pan horizontally and vertically */}
+        {/* Portrait: large scrollable map, pan horizontal and vertical */}
         {isPortrait ? (
-          <div className="h-[92vh] w-full overflow-auto overscroll-contain touch-pan-x touch-pan-y shrink-0">
-            {/* 4:3 map, larger than viewport so you can scroll both ways */}
+          <div className="w-full h-[96vh] min-h-0 shrink-0 overflow-x-auto overflow-y-auto overscroll-contain touch-pan-x touch-pan-y">
+            {/* 4:3 map, 1.5× viewport so map is large and scrolls both ways */}
             <div
               className="flex flex-col relative shrink-0 bg-gray-900"
               style={{
-                width: "133.33vh",
-                height: "100vh",
+                width: "150vh",
+                height: "112.5vh",
                 minWidth: "100%",
+                minHeight: "100%",
               }}
             >
               {loading && (
