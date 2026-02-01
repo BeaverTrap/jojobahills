@@ -19,6 +19,7 @@ function MapPageContent() {
   const [showPlaces, setShowPlaces] = useState(true);
   const [showValves, setShowValves] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(true);
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker | null>(null);
   const [layersOpen, setLayersOpen] = useState(false);
 
@@ -28,6 +29,14 @@ function MapPageContent() {
     update();
     m.addEventListener("change", update);
     return () => m.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const portrait = window.matchMedia("(orientation: portrait)");
+    const update = () => setIsPortrait(portrait.matches);
+    update();
+    portrait.addEventListener("change", update);
+    return () => portrait.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
@@ -88,7 +97,7 @@ function MapPageContent() {
 
   const lotsToShowParam = lotsToShow;
 
-  // Mobile: full-screen map with minimal top bar and bottom sheet
+  // Mobile: map on its own. Portrait = most of screen height + horizontal scroll; landscape = full screen
   if (isMobile) {
     return (
       <div className="fixed inset-0 z-30 flex flex-col bg-black md:relative md:z-auto">
@@ -145,25 +154,48 @@ function MapPageContent() {
           </div>
         </div>
 
-        {/* Full-screen map area */}
-        <div className="flex-1 min-h-0 flex flex-col relative">
-          {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
-              <p className="text-gray-300 text-sm">Loading lots...</p>
+        {/* Portrait: most of screen height, horizontal scroll for width. Landscape: full remaining height, no scroll */}
+        {isPortrait ? (
+          <div className="h-[85vh] overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x shrink-0">
+            <div className="h-full flex flex-col relative shrink-0" style={{ width: "calc(85vh * 4 / 3)", minWidth: "100%" }}>
+              {loading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                  <p className="text-gray-300 text-sm">Loading lots...</p>
+                </div>
+              )}
+              <ParkMap
+                lotsToShow={lotsToShowParam}
+                highlightLot={lotParam}
+                onLotClick={handleLotClick}
+                onPlaceClick={handlePlaceClick}
+                onValveClick={handleValveClick}
+                showLots={showLots}
+                showPlaces={showPlaces}
+                showValves={showValves}
+                fillHeight
+              />
             </div>
-          )}
-          <ParkMap
-            lotsToShow={lotsToShowParam}
-            highlightLot={lotParam}
-            onLotClick={handleLotClick}
-            onPlaceClick={handlePlaceClick}
-            onValveClick={handleValveClick}
-            showLots={showLots}
-            showPlaces={showPlaces}
-            showValves={showValves}
-            fillHeight
-          />
-        </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 flex flex-col relative">
+            {loading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                <p className="text-gray-300 text-sm">Loading lots...</p>
+              </div>
+            )}
+            <ParkMap
+              lotsToShow={lotsToShowParam}
+              highlightLot={lotParam}
+              onLotClick={handleLotClick}
+              onPlaceClick={handlePlaceClick}
+              onValveClick={handleValveClick}
+              showLots={showLots}
+              showPlaces={showPlaces}
+              showValves={showValves}
+              fillHeight
+            />
+          </div>
+        )}
 
         {/* Bottom sheet: selected marker popup */}
         {selectedMarker && (
