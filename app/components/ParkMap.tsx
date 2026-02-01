@@ -81,14 +81,15 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   const hasZoneColors = Object.keys(zoneColors).length > 0 && Object.keys(lotZones).length > 0;
 
   return (
-    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
-      <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden w-full">
+      {/* Mobile-first: min height so map is usable on small screens; 4/3 aspect on larger */}
+      <div className="relative w-full min-h-[55dvh] sm:min-h-0" style={{ aspectRatio: "4/3" }}>
         <Image
           src={`/api/map/image?v=${imageVersion}`}
           alt="Park map"
           fill
           className="object-contain"
-          sizes="(max-width: 1024px) 100vw, 1024px"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1024px"
           unoptimized
         />
         {showLots && allLotIds.map((lotId) => {
@@ -124,8 +125,8 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
                 onClick={onLotClick ? () => onLotClick(lotId) : undefined}
                 onKeyDown={onLotClick ? (e) => { if (e.key === "Enter" || e.key === " ") onLotClick(lotId); } : undefined}
                 className={`
-                  inline-block px-1.5 py-0.5 text-xs font-bold rounded
-                  ${onLotClick ? "cursor-pointer hover:ring-2 hover:ring-white/80 transition-shadow" : ""}
+                  inline-flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 px-2 py-1.5 sm:px-1.5 sm:py-0.5 text-[11px] sm:text-xs font-bold rounded touch-manipulation
+                  ${onLotClick ? "cursor-pointer hover:ring-2 hover:ring-white/80 active:scale-95 transition-all" : ""}
                   ${lotClass}
                 `}
               >
@@ -156,14 +157,14 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
                 onClick={isClickable ? () => onPlaceClick?.(placeName) : undefined}
                 onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onPlaceClick?.(placeName); } : undefined}
                 className={`
-                  inline-flex items-center justify-center rounded-full p-1.5
+                  inline-flex items-center justify-center rounded-full w-11 h-11 sm:w-9 sm:h-9 p-2.5 sm:p-1.5 touch-manipulation
                   ${getPlaceColor(pos.icon ?? "MdPlace")}
-                  ${isClickable ? "cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-white/80 transition-all" : ""}
+                  ${isClickable ? "cursor-pointer hover:opacity-90 active:scale-95 hover:ring-2 hover:ring-white/80 transition-all" : ""}
                 `}
               >
-                <IconComponent className="shrink-0" size={18} />
+                <IconComponent className="shrink-0 w-5 h-5 sm:w-[18px] sm:h-[18px]" size={20} />
               </span>
-              {/* Name only on hover */}
+              {/* Name: hover on desktop; on mobile native tooltip via title */}
               <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-xs font-medium text-white bg-gray-900 rounded shadow-lg whitespace-nowrap pointer-events-none z-10 invisible group-hover:visible">
                 {placeName}
               </span>
@@ -198,21 +199,21 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
                 onClick={isClickable ? () => onValveClick?.(valveId) : undefined}
                 onKeyDown={isClickable ? (e) => { if (e.key === "Enter" || e.key === " ") onValveClick?.(valveId); } : undefined}
                 className={`
-                  inline-flex flex-col items-center
-                  ${isClickable ? "cursor-pointer hover:opacity-90 hover:ring-2 hover:ring-white/80 rounded transition-all" : ""}
+                  inline-flex flex-col items-center touch-manipulation
+                  ${isClickable ? "cursor-pointer hover:opacity-90 active:scale-95 hover:ring-2 hover:ring-white/80 rounded transition-all" : ""}
                 `}
               >
                 <span
                   className={`
-                    inline-flex items-center justify-center rounded-full p-1.5
+                    inline-flex items-center justify-center rounded-full w-11 h-11 sm:w-9 sm:h-9 p-2.5 sm:p-1.5
                     ${isHighlight ? "bg-slate-700 text-white ring-2 ring-white" : "bg-slate-600 text-white"}
                   `}
                 >
-                  <MdPlumbing className="shrink-0" size={18} />
+                  <MdPlumbing className="shrink-0 w-5 h-5 sm:w-[18px] sm:h-[18px]" size={20} />
                 </span>
                 <span
                   className={`
-                    mt-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded min-w-[1.75rem] text-center
+                    mt-1 sm:mt-0.5 px-2 py-0.5 sm:px-1.5 sm:py-0.5 text-[11px] sm:text-[10px] font-bold rounded min-w-[2rem] sm:min-w-[1.75rem] text-center
                     ${isHighlight ? "bg-slate-700 text-white ring-1 ring-white/50" : "bg-slate-700/90 text-white"}
                   `}
                 >
@@ -223,7 +224,7 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
           );
         })}
       </div>
-      <p className="text-gray-400 text-xs p-2 border-t border-gray-800">
+      <p className="text-gray-400 text-[10px] sm:text-xs p-2 border-t border-gray-800">
         Lot numbers and facility icons on the map. {lotsToShow.length > 0 ? `${lotsToShow.length} lot(s) highlighted for current search.` : "Select a zone, lot, or valve to highlight."}
       </p>
     </div>

@@ -339,13 +339,23 @@ function HomeContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-gray-900 rounded-lg shadow-xl min-h-screen p-8 border border-gray-800">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-white">JoJoba Hills SKP Maintenance Dept.</h1>
-        <p className="text-gray-400">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="bg-gray-900 rounded-lg shadow-xl min-h-screen p-4 sm:p-8 border border-gray-800">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-3xl font-bold mb-2 text-white">JoJoba Hills SKP Maintenance Dept.</h1>
+        <p className="text-sm sm:text-base text-gray-400">
           Enter a valve ID, zone, or lot number to find all related information
         </p>
+        {/* Mobile-first: obvious way to open full map on small screens */}
+        {data?.valves && data.valves.length > 0 && (
+          <Link
+            href="/map"
+            className="mt-3 sm:mt-2 inline-flex items-center gap-2 px-4 py-3 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium touch-manipulation min-h-[44px] sm:min-h-0"
+          >
+            Open full map
+            <span aria-hidden>→</span>
+          </Link>
+        )}
         <div className="flex flex-wrap items-center gap-3 mt-2">
           {data?.stale && (
             <p className="text-sm text-yellow-400">
@@ -453,41 +463,51 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Map - lot numbers/names over the clean map; layer toggles to hide/show lots, places, valves */}
+      {/* Map - full width on mobile; clear "open full map" for phone screens */}
       {data?.valves && data.valves.length > 0 && (
-        <div className="mb-8 bg-gray-900 rounded-lg border border-gray-800 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <h2 className="text-lg font-semibold text-white">Map</h2>
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+        <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0 px-0 sm:px-0 bg-gray-900 sm:rounded-lg border-0 sm:border border-gray-800 border-y border-gray-800 sm:border-y-0 py-3 sm:py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-2 sm:mb-3 px-3 sm:px-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h2 className="text-base sm:text-lg font-semibold text-white">Map</h2>
+              <Link
+                href="/map"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium touch-manipulation min-h-[44px] sm:min-h-0 items-center"
+              >
+                Open full map
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
                 <input
                   type="checkbox"
                   checked={mapShowLots}
                   onChange={(e) => setMapShowLots(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
                 />
                 Lots
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
                 <input
                   type="checkbox"
                   checked={mapShowPlaces}
                   onChange={(e) => setMapShowPlaces(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
                 />
                 Places
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white">
+              <label className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white touch-manipulation min-h-[44px] sm:min-h-0">
                 <input
                   type="checkbox"
                   checked={mapShowValves}
                   onChange={(e) => setMapShowValves(e.target.checked)}
-                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500"
+                  className="rounded border-gray-500 bg-gray-800 text-blue-500 focus:ring-blue-500 w-4 h-4"
                 />
                 Valves
               </label>
             </div>
           </div>
+          <div className="rounded-none sm:rounded-lg overflow-hidden border-0 border-gray-700">
           <ParkMap
             lotsToShow={mapLotsToShow}
             highlightLot={mapHighlightLot}
@@ -502,6 +522,7 @@ function HomeContent() {
             showPlaces={mapShowPlaces}
             showValves={mapShowValves}
           />
+          </div>
         </div>
       )}
 

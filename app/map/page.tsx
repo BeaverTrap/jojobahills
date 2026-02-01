@@ -40,16 +40,16 @@ function MapPageContent() {
   }, [lotParam, lotsForZone]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <h1 className="text-2xl font-bold text-white">Park Map</h1>
-          <div className="flex items-center gap-2">
-            <Link href="/map/edit" className="text-sm text-amber-400 hover:text-amber-300">
-              Edit positions
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="bg-gray-900 rounded-lg border border-gray-800 p-4 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Park Map</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href="/" className="inline-flex items-center min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium touch-manipulation">
+              ← Back to Lookup
             </Link>
-            <Link href="/" className="text-sm text-blue-400 hover:text-blue-300">
-              ← Lookup
+            <Link href="/map/edit" className="text-sm text-amber-400 hover:text-amber-300 py-2 touch-manipulation">
+              Edit positions
             </Link>
             {zoneParam && (
               <span className="text-sm text-gray-400">
