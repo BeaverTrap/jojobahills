@@ -34,9 +34,11 @@ type ParkMapProps = {
   showLots?: boolean;
   showPlaces?: boolean;
   showValves?: boolean;
+  /** When true, map container fills available height (for full-screen mobile) */
+  fillHeight?: boolean;
 };
 
-export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true }: ParkMapProps) {
+export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [], lotZones = {}, zoneColors = {}, highlightValve = null, onLotClick, onPlaceClick, onValveClick, showLots = true, showPlaces = true, showValves = true, fillHeight = false }: ParkMapProps) {
   const [lots, setLots] = useState<LotPositions>({});
   const [places, setPlaces] = useState<PlacePositions>({});
   const [valves, setValves] = useState<ValvePositions>({});
@@ -81,9 +83,12 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
   const hasZoneColors = Object.keys(zoneColors).length > 0 && Object.keys(lotZones).length > 0;
 
   return (
-    <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden w-full">
-      {/* Mobile-first: min height so map is usable on small screens; 4/3 aspect on larger */}
-      <div className="relative w-full min-h-[55dvh] sm:min-h-0" style={{ aspectRatio: "4/3" }}>
+    <div className={`bg-gray-900 rounded-lg border border-gray-700 overflow-hidden w-full ${fillHeight ? "flex flex-col flex-1 min-h-0" : ""}`}>
+      {/* When fillHeight: map fills parent; else min height on mobile, 4/3 aspect on larger */}
+      <div
+        className={`relative w-full ${fillHeight ? "flex-1 min-h-0" : "min-h-[55dvh] sm:min-h-0"}`}
+        style={fillHeight ? undefined : { aspectRatio: "4/3" }}
+      >
         <Image
           src={`/api/map/image?v=${imageVersion}`}
           alt="Park map"
@@ -224,9 +229,11 @@ export function ParkMap({ lotsToShow = [], highlightLot = null, contextZones = [
           );
         })}
       </div>
+      {!fillHeight && (
       <p className="text-gray-400 text-[10px] sm:text-xs p-2 border-t border-gray-800">
         Lot numbers and facility icons on the map. {lotsToShow.length > 0 ? `${lotsToShow.length} lot(s) highlighted for current search.` : "Select a zone, lot, or valve to highlight."}
       </p>
+      )}
     </div>
   );
 }
